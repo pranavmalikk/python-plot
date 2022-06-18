@@ -1,0 +1,102 @@
+import datetime
+import random
+import matplotlib.pyplot as plt
+import csv
+import numpy as np
+import pandas as pd
+from matplotlib.dates import DateFormatter
+
+
+#time
+x = []
+#strike information
+y = []
+# actual notional value
+z = []
+# SPX price at time
+SPX_price = []
+#Spread
+bid_ask_spread = []
+#Strike Ask or Bid
+strike_buy_price = []
+#Put/Call
+put_call = []
+
+with open('SPX-Options.csv','r') as csvfile:
+    plots = csv.reader(csvfile, delimiter = ',')
+
+    for row in plots: 
+        x.append(row[0])
+        y.append(row[1])
+        quanity = float(str(row[2]).replace(",", ""))
+        z.append(int(quanity) * int(float(row[3])) * 100)
+        SPX_price.append(row[-3])
+        bid_ask_spread.append(row[5])
+        strike_buy_price.append(row[3])
+        put_call.append(row[1])
+
+bid_ask_spread = [split.split('x') for split in bid_ask_spread]   
+bid_ask_spread = [list(map(float, sublist)) for sublist in bid_ask_spread]
+
+strike_buy_price = [float(i) for i in strike_buy_price]
+
+SPX_price = [float(i) for i in SPX_price]
+
+for i,j in zip(strike_buy_price,bid_ask_spread):
+    if i >= j[1]:
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Ask'
+    elif i <= j[0]:
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Bid'
+    else:  
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Mid'
+
+
+put_call = [split.split(' ')[-1] for split in put_call]
+print(put_call[68])
+print(bid_ask_spread[68])
+print(strike_buy_price[68])
+
+for i,j in zip(put_call,bid_ask_spread):
+    if (i == 'P' and j == 'Ask') or (i == 'C' and j == 'Bid'): 
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Bearish'
+    elif (i == 'P' and j == 'Bid') or (i == 'C' and j == 'Ask'):
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Bullish'
+    else:
+        bid_ask_spread[bid_ask_spread.index(j)] = 'Neutral'
+
+
+df = pd.DataFrame({'time': x,
+                   'strike': y,
+                   'notional': z,
+                   'position_stance': bid_ask_spread,
+                   'spx_price': SPX_price})
+
+x = np.array(x)
+y = np.array(y)
+
+colors = df['position_stance'].map({
+    'Bullish': 'blue',
+    'Bearish': 'orange',
+    "Neutral": 'pink'
+})
+
+print(colors[68])
+
+#get the strike info
+for i in range(len(y)):
+    y[i] = int(y[i].split(' ')[3])
+    #+ y[i].split(' ')[4]
+
+
+time = pd.to_datetime(df['time'])
+
+# xmin = pd.Timestamp('16:15')
+# xmax = pd.Timestamp('9:30')
+
+# df = df[df.position_stance != 'Neutral']
+
+fig, ax = plt.subplots(figsize=(6,4))
+ax.scatter(x=time, y = df['spx_price'], c=colors, s=df['notional']/3000, alpha=0.2)
+ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+
+plt.show()
