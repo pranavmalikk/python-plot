@@ -52,9 +52,6 @@ for i,j in zip(strike_buy_price,bid_ask_spread):
 
 
 put_call = [split.split(' ')[-1] for split in put_call]
-print(put_call[68])
-print(bid_ask_spread[68])
-print(strike_buy_price[68])
 
 for i,j in zip(put_call,bid_ask_spread):
     if (i == 'P' and j == 'Ask') or (i == 'C' and j == 'Bid'): 
@@ -79,8 +76,6 @@ colors = df['position_stance'].map({
     'Bearish': 'orange',
     "Neutral": 'pink'
 })
-
-print(colors[68])
 
 #get the strike info
 for i in range(len(y)):
