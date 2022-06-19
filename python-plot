@@ -5,6 +5,8 @@ import csv
 import numpy as np
 import pandas as pd
 from matplotlib.dates import DateFormatter
+import mplcursors
+
 
 #hello
 #time
@@ -21,6 +23,7 @@ bid_ask_spread = []
 strike_buy_price = []
 #Put/Call
 put_call = []
+
 
 with open('SPX-Options.csv','r') as csvfile:
     plots = csv.reader(csvfile, delimiter = ',')
@@ -61,12 +64,13 @@ for i,j in zip(put_call,bid_ask_spread):
     else:
         bid_ask_spread[bid_ask_spread.index(j)] = 'Neutral'
 
+convert_into_comma = ['{:,}'.format(i) for i in z]
 
 df = pd.DataFrame({'time': x,
                    'strike': y,
                    'notional': z,
                    'position_stance': bid_ask_spread,
-                   'spx_price': SPX_price})
+                   'spx_price': SPX_price,})
 
 x = np.array(x)
 y = np.array(y)
@@ -77,21 +81,22 @@ colors = df['position_stance'].map({
     "Neutral": 'pink'
 })
 
-#get the strike info
-for i in range(len(y)):
-    y[i] = int(y[i].split(' ')[3])
-    #+ y[i].split(' ')[4]
-
 
 time = pd.to_datetime(df['time'])
 
-# xmin = pd.Timestamp('16:15')
-# xmax = pd.Timestamp('9:30')
-
-# df = df[df.position_stance != 'Neutral']
-
 fig, ax = plt.subplots(figsize=(6,4))
-ax.scatter(x=time, y = df['spx_price'], c=colors, s=df['notional']/3000, alpha=0.2)
 ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+sc = ax.scatter(x=time, y = df['spx_price'], c=colors, s=df['notional']/3000, alpha=0.2)
+
+cr = mplcursors.cursor(sc, hover=mplcursors.HoverMode.Transient)
+cr.connect("add", lambda sel: sel.annotation.set_text((df.loc[sel.target.index, ["notional", 'strike']].to_string())))
+# by default the annotation displays the xy positions
+# this is to change it to the countries name
+# @cursor.connect("add")
+# def on_add(sel):
+#     sel.annotation.set(text={df.iloc[sel.index]['strike']} + {df.loc[sel.target.index]["notional"]})
+
+# cursor().connect(
+#     "add", lambda sel: sel.annotation.set_text(df["strike"][sel.index], df["notional"][sel.index]))
 
 plt.show()
